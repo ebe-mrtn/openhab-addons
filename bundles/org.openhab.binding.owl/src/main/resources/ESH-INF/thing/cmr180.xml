@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="owl"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Sample Thing Type -->
+	<thing-type id="cmr180">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="bridge"/>
+		</supported-bridge-type-refs>
+		
+		<label>Owl Intuition CMR180(i)</label>
+		<description>Owl Intuition energy monitoring system</description>
+
+		<channels>
+			<channel id="currPhase1" typeId="currPower" />
+			<channel id="currPhase2" typeId="currPower" />
+			<channel id="currPhase3" typeId="currPower" />
+			<channel id="dayPhase1" typeId="dailyEnergy" />
+			<channel id="dayPhase2" typeId="dailyEnergy" />
+			<channel id="dayPhase3" typeId="dailyEnergy" />
+			<!-- TODO other channels: battery, signal, timestamp? -->
+		</channels>
+
+		<config-description>
+			<parameter name="mode" type="text" required="true">
+				<label>Mode</label>
+				<description>Set mode of energy meter: 0 for single phase, 1 for 3 phase, 2 for PV</description>
+			</parameter>
+			<!-- TODO other configs... -->
+		</config-description>
+
+	</thing-type>
+
+	<!-- Sample Channel Type -->
+	<channel-type id="currPower">
+		<item-type>Number</item-type>
+		<label>Current used power</label>
+		<category>Energy</category>
+		<state pattern="%.2f W" readOnly="true"/>
+	</channel-type>
+	<channel-type id="dailyEnergy">
+		<item-type>Number</item-type>
+		<label>Daily Energy</label>
+		<category>Energy</category>
+		<state pattern="%.2f kWh" readOnly="true"/>
+	</channel-type>
+
+</thing:thing-descriptions>

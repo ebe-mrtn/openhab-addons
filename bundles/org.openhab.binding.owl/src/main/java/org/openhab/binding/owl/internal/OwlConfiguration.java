@@ -20,7 +20,12 @@ package org.openhab.binding.owl.internal;
 public class OwlConfiguration {
 
     /**
-     * Sample configuration parameter. Replace with your own.
+     * Configuration parameter of the Network OWL bridge interface.
      */
-    public String config1;
+    public String ipAddress;
+    public Integer udpPort;
+    public String udpKey;
+    public String mcastGroup;
+    public Integer mcastPort;
+    public Integer pollingInterval;
 }

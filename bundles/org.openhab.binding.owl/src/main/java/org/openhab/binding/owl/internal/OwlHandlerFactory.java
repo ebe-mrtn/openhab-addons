@@ -12,13 +12,16 @@
  */
 package org.openhab.binding.owl.internal;
 
-import static org.openhab.binding.owl.internal.OwlBindingConstants.*;
+import static org.openhab.binding.owl.internal.OwlBindingConstants.THING_TYPE_BRIDGE;
+import static org.openhab.binding.owl.internal.OwlBindingConstants.THING_TYPE_CMR180;
 
-import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
@@ -36,7 +39,8 @@ import org.osgi.service.component.annotations.Component;
 @Component(configurationPid = "binding.owl", service = ThingHandlerFactory.class)
 public class OwlHandlerFactory extends BaseThingHandlerFactory {
 
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.singleton(THING_TYPE_SAMPLE);
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Stream.of(THING_TYPE_BRIDGE
+            , THING_TYPE_CMR180).collect(Collectors.toSet());
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -47,8 +51,11 @@ public class OwlHandlerFactory extends BaseThingHandlerFactory {
     protected @Nullable ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        if (THING_TYPE_SAMPLE.equals(thingTypeUID)) {
-            return new OwlHandler(thing);
+        if (THING_TYPE_BRIDGE.equals(thingTypeUID)) {
+            return new OwlBridgeHandler((Bridge)thing);
+        }
+        if (THING_TYPE_CMR180.equals(thingTypeUID)) {
+            return new OwlEnergyHandler(thing);
         }
 
         return null;
