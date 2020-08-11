@@ -25,7 +25,8 @@
 				<context>ipAddress</context>
 				<label>Network Address</label>
 				<description>Network address of the Network OWL</description>
-				<required>true</required>
+				<required>false</required>
+				<advanced>true</advanced>
 			</parameter>
 			<parameter name="udpPort" type="integer" required="false" min="1024" max="49151">
 				<label>Port</label>
@@ -48,18 +49,21 @@
 				<description>IP address of the multicast group</description>
 				<default>224.192.32.19</default>
 				<advanced>true</advanced>
+				<required>true</required>
 			</parameter>
 			<parameter name="mcastPort" type="integer" required="false" min="1024" max="49151">
 				<label>Port</label>
 				<description>Port of the multicast group</description>
 				<default>22600</default>
 				<advanced>true</advanced>
-			</parameter>
-			<parameter name="pollingInterval" type="integer" min="1" step="1" unit="s">
-				<label>Polling Interval</label>
-				<description>Seconds between fetching values from the bridge. Default is 60.</description>
 				<required>true</required>
-				<default>60</default>
+			</parameter>
+			<parameter name="timoutInterval" type="integer" min="1" max="10" step="1" unit="min">
+				<label>Timeout Interval</label>
+				<description>Minutes to timeout connection, if no multicast was received. Default is 5 minutes.</description>
+				<required>true</required>
+				<default>5</default>
+				<advanced>true</advanced>
 			</parameter>
 		</config-description>
 	</bridge-type>

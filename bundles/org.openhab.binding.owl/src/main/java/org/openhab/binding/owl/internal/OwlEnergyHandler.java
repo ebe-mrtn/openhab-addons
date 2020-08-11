@@ -12,7 +12,7 @@
  */
 package org.openhab.binding.owl.internal;
 
-import static org.openhab.binding.owl.internal.OwlBindingConstants.CHANNEL_CURR_PHASE_1;
+import static org.openhab.binding.owl.internal.OwlBindingConstants.CHANNEL_POWER_PHASE_1;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -43,7 +43,7 @@ public class OwlEnergyHandler extends BaseThingHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (CHANNEL_CURR_PHASE_1.equals(channelUID.getId())) {
+        if (CHANNEL_POWER_PHASE_1.equals(channelUID.getId())) {
             // if (command instanceof RefreshType) {
                 // TODO: handle data refresh
             // }
@@ -60,6 +60,7 @@ public class OwlEnergyHandler extends BaseThingHandler {
     @Override
     public void initialize() {
         logger.debug("Start initializing!");
+        OwlBridgeHandler handler = (OwlBridgeHandler)getBridge().getHandler();
         config = getConfigAs(OwlConfiguration.class);
 
         // TODO: Initialize the handler.
@@ -77,7 +78,7 @@ public class OwlEnergyHandler extends BaseThingHandler {
 
         // Example for background initialization:
         scheduler.execute(() -> {
-            boolean thingReachable = true; // <background task with long running initialization here>
+            boolean thingReachable = handler.isOnline(); // <background task with long running initialization here>
             // when done do:
             if (thingReachable) {
                 updateStatus(ThingStatus.ONLINE);

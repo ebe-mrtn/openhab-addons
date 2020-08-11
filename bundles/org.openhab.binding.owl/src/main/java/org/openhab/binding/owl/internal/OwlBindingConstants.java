@@ -34,12 +34,12 @@ public class OwlBindingConstants {
     public static final ThingTypeUID THING_TYPE_CMR180 = new ThingTypeUID(BINDING_ID, "cmr180");
 
     // List of all Channel ids
-    public static final String CHANNEL_CURR_PHASE_1 = "currPhase1";
-    public static final String CHANNEL_CURR_PHASE_2 = "currPhase2";
-    public static final String CHANNEL_CURR_PHASE_3 = "currPhase3";
-    public static final String CHANNEL_DAY_PHASE_1 = "dayPhase1";
-    public static final String CHANNEL_DAY_PHASE_2 = "dayPhase2";
-    public static final String CHANNEL_DAY_PHASE_3 = "dayPhase3";
+    public static final String CHANNEL_POWER_PHASE_1 = "powerPhase1";
+    public static final String CHANNEL_POWER_PHASE_2 = "powerPhase2";
+    public static final String CHANNEL_POWER_PHASE_3 = "powerPhase3";
+    public static final String CHANNEL_ENERGY_PHASE_1 = "energyPhase1";
+    public static final String CHANNEL_ENERGY_PHASE_2 = "energyPhase2";
+    public static final String CHANNEL_ENERGY_PHASE_3 = "energyPhase3";
 
     // Bridge config properties
     public static final String UDP_HOST = "ipAddress";

@@ -64,7 +64,7 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
 
         // Example for background initialization:
         scheduler.execute(() -> {
-            boolean thingReachable = true; // <background task with long running initialization here>
+            boolean thingReachable = isOnline(); // <background task with long running initialization here>
             // when done do:
             if (thingReachable) {
                 updateStatus(ThingStatus.ONLINE);
@@ -84,6 +84,9 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void dispose() {
-        
+    }
+    
+    public boolean isOnline() {
+        return false;
     }
 }
