@@ -12,8 +12,6 @@
  */
 package org.openhab.binding.owl.internal;
 
-import static org.openhab.binding.owl.internal.OwlBindingConstants.CHANNEL_POWER_PHASE_1;
-
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.thing.ChannelUID;
@@ -21,6 +19,7 @@ import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
+import org.eclipse.smarthome.core.types.RefreshType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,17 +42,10 @@ public class OwlEnergyHandler extends BaseThingHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (CHANNEL_POWER_PHASE_1.equals(channelUID.getId())) {
-            // if (command instanceof RefreshType) {
-                // TODO: handle data refresh
-            // }
-    
-            // TODO: handle command
-    
-            // Note: if communication with thing fails for some reason,
-            // indicate that by setting the status with detail information:
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-            // "Could not control device at IP address x.x.x.x");
+        if (command == RefreshType.REFRESH) {
+            logger.debug("Refreshing {}", channelUID);
+        } else {
+            logger.warn("This binding is a read-only binding and cannot handle commands");
         }
     }
     

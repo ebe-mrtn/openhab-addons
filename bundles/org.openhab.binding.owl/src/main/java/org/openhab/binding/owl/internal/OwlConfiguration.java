@@ -27,5 +27,5 @@ public class OwlConfiguration {
     public String udpKey;
     public String mcastGroup;
     public Integer mcastPort;
-    public Integer pollingInterval;
+    public Integer timoutInterval;
 }
