@@ -12,14 +12,19 @@
  */
 package org.openhab.binding.owl.internal;
 
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
+import org.openhab.binding.owl.internal.packets.EnergyPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +38,7 @@ import org.slf4j.LoggerFactory;
 public class OwlEnergyHandler extends BaseThingHandler {
 
     private final Logger logger = LoggerFactory.getLogger(OwlEnergyHandler.class);
-
+    private @Nullable ScheduledFuture<?> pollingJob;
     private @Nullable OwlConfiguration config;
 
     public OwlEnergyHandler(Thing thing) {
@@ -44,6 +49,7 @@ public class OwlEnergyHandler extends BaseThingHandler {
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (command == RefreshType.REFRESH) {
             logger.debug("Refreshing {}", channelUID);
+            updateData();
         } else {
             logger.warn("This binding is a read-only binding and cannot handle commands");
         }
@@ -51,40 +57,44 @@ public class OwlEnergyHandler extends BaseThingHandler {
     
     @Override
     public void initialize() {
-        logger.debug("Start initializing!");
-        OwlBridgeHandler handler = (OwlBridgeHandler)getBridge().getHandler();
         config = getConfigAs(OwlConfiguration.class);
-
-        // TODO: Initialize the handler.
-        // The framework requires you to return from this method quickly. Also, before leaving this method a thing
-        // status from one of ONLINE, OFFLINE or UNKNOWN must be set. This might already be the real thing status in
-        // case you can decide it directly.
-        // In case you can not decide the thing status directly (e.g. for long running connection handshake using WAN
-        // access or similar) you should set status UNKNOWN here and then decide the real status asynchronously in the
-        // background.
-
-        // set the thing status to UNKNOWN temporarily and let the background task decide for the real status.
-        // the framework is then able to reuse the resources from the thing handler initialization.
-        // we set this upfront to reliably check status updates in unit tests.
         updateStatus(ThingStatus.UNKNOWN);
-
-        // Example for background initialization:
-        scheduler.execute(() -> {
-            boolean thingReachable = handler.isOnline(); // <background task with long running initialization here>
-            // when done do:
-            if (thingReachable) {
-                updateStatus(ThingStatus.ONLINE);
-            } else {
-                updateStatus(ThingStatus.OFFLINE);
-            }
+        // schedule an init job, which does nothing to initialize the sheduler
+        scheduler.submit(() -> {
         });
+        // create polling job for periodically update data received thru bridge
+        pollingJob = scheduler.scheduleWithFixedDelay(this::updateData, 1, OwlBindingConstants.DEFAULT_POLLING_TIME, TimeUnit.SECONDS);
+        logger.info("Receive polling job started for '{}'", getThing().getUID());
+        updateStatus(ThingStatus.OFFLINE);
+    }
+    
+    @Override
+    public void dispose() {
+        // stop waiting for multicasts
+        if (pollingJob != null) {
+            pollingJob.cancel(true);
+            pollingJob = null;
+        }
+        logger.info("Handler '{}' disposed", getThing().getUID());
+    }
 
-        logger.debug("Finished initializing!");
-
-        // Note: When initialization can NOT be done set the status with more details for further
-        // analysis. See also class ThingStatusDetail for all available status details.
-        // Add a description to give user information to understand why thing does not work as expected. E.g.
-        // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-        // "Can not access device as username and/or password are invalid");
+    private void updateData() {
+        // check if bridge has a valid energy packet for us
+        OwlBridgeHandler handler = (OwlBridgeHandler) getBridge().getHandler();
+        EnergyPacket packet = handler.getEnergyPacket();
+        if (packet != null) {
+            logger.info("Packet processed...");
+            // update the data for the thing
+            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_1, new DecimalType(packet.getPhase1().getPower()));
+            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_2, new DecimalType(packet.getPhase2().getPower()));
+            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_3, new DecimalType(packet.getPhase3().getPower()));
+            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_1, new DecimalType(packet.getPhase1().getEnergy()));
+            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_2, new DecimalType(packet.getPhase2().getEnergy()));
+            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_3, new DecimalType(packet.getPhase3().getEnergy()));
+            // if we are not online already, we are now
+            if (getThing().getStatus().equals(ThingStatus.OFFLINE)) {
+                updateStatus(ThingStatus.ONLINE);
+            }
+        }
     }
 }

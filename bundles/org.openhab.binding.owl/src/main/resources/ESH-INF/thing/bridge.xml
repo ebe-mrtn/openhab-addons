@@ -8,18 +8,18 @@
 		<label>Owl Bridge</label>
 		<description>The Network OWL is a bridge to OWL Intuition devices.</description>
 
-        <!--
+		<!--
 		<channels>
 			<channel id="scene" typeId="scene" />
 		</channels>
-        -->
+		-->
 
 		<properties>
 			<property name="vendor">2 Save Energy Limited</property>
-        </properties>
-        
-        <representation-property>macId</representation-property>
-        
+		</properties>
+
+		<representation-property>macId</representation-property>
+
 		<config-description>
 			<parameter name="ipAddress" type="text">
 				<context>ipAddress</context>
@@ -38,8 +38,8 @@
 				<context>udpKey</context>
 				<label>UDP key</label>
 				<description>
-                    Each Network OWL has its own UDP key, which can be requested from The OWL Customer services department.
-                    This key is required to send control messages to the Network OWL. If key is not provided no control messages will be accepted.
+					Each Network OWL has its own UDP key, which can be requested from The OWL Customer services department.
+					This key is required to send control messages to the Network OWL. If key is not provided no control messages will be accepted.
 				</description>
 				<advanced>true</advanced>
 				<required>false</required>

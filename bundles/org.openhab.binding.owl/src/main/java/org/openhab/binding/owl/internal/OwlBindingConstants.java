@@ -51,4 +51,10 @@ public class OwlBindingConstants {
 
     // Thing configuration properties
     public static final String CMR180_MODE = "mode";
+
+    // other binding constants
+    public static final String DEFAULT_MCAST_GRP = "224.192.32.19";
+    public static final int DEFAULT_MCAST_PORT = 22600;
+    public static final int DEFAULT_TIMEOUT_MINS = 5;
+    public static final int DEFAULT_POLLING_TIME = 30;
 }

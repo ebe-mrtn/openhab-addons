@@ -28,6 +28,7 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
+import org.openhab.binding.owl.internal.packets.EnergyPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,19 +40,16 @@ import org.slf4j.LoggerFactory;
  */
 @NonNullByDefault
 public class OwlBridgeHandler extends BaseBridgeHandler {
-    public static final String DEFAULT_MCAST_GRP = "224.192.32.19";
-    public static final int DEFAULT_MCAST_PORT = 22600;
-    public static final int DEFAULT_TIMEOUT_MINS = 5;
-    public static final int DEFAULT_POLLING_TIME = 30;
-
     private final Logger logger = LoggerFactory.getLogger(OwlBridgeHandler.class);
     private OwlConfiguration config = getConfigAs(OwlConfiguration.class);
-    private String multicastGroup = DEFAULT_MCAST_GRP;
-    private int multicastPort = DEFAULT_MCAST_PORT;
-    private int timeoutMinutes = DEFAULT_TIMEOUT_MINS;
+    private String multicastGroup = OwlBindingConstants.DEFAULT_MCAST_GRP;
+    private int multicastPort = OwlBindingConstants.DEFAULT_MCAST_PORT;
+    private int timeoutMinutes = OwlBindingConstants.DEFAULT_TIMEOUT_MINS;
 
     private @Nullable ScheduledFuture<?> pollingJob;
     private @Nullable MulticastSocket multicastSocket;
+
+    private @Nullable EnergyPacket energyPacket = null;
 
     public OwlBridgeHandler(Bridge bridge) {
         super(bridge);
@@ -77,9 +75,12 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
     public void initialize() {
         // get config parameters or defaults
         config = getConfigAs(OwlConfiguration.class);
-        multicastPort = (config.mcastPort == null) ? DEFAULT_MCAST_PORT : config.mcastPort;
-        multicastGroup = (config.mcastGroup == null) ? DEFAULT_MCAST_GRP : config.mcastGroup;
-        timeoutMinutes = (config.timoutInterval == null) ? DEFAULT_TIMEOUT_MINS : config.timoutInterval;
+        multicastPort = (config.mcastPort == null) ? 
+                        OwlBindingConstants.DEFAULT_MCAST_PORT : config.mcastPort;
+        multicastGroup = (config.mcastGroup == null) ? 
+                         OwlBindingConstants.DEFAULT_MCAST_GRP : config.mcastGroup;
+        timeoutMinutes = (config.timoutInterval == null) ? 
+                         OwlBindingConstants.DEFAULT_TIMEOUT_MINS : config.timoutInterval;
 
         // set the thing status to UNKNOWN temporarily
         updateStatus(ThingStatus.UNKNOWN);
@@ -91,21 +92,17 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
             multicastSocket.setReuseAddress(true);
             multicastSocket.setSoTimeout(timeoutMinutes * 60 * 1000);
             multicastSocket.joinGroup(address);
-            logger.info("UDP multicast socket opened on '{}:{}' with {} minutes timeout", multicastGroup,
-                    multicastPort, timeoutMinutes);
+            logger.info("UDP multicast socket opened on '{}:{}' with {} minutes timeout", multicastGroup, multicastPort,
+                    timeoutMinutes);
 
             // schedule an init job, which does nothing
             // to initialize the sheduler
             scheduler.submit(() -> {
             });
-            // shedule receiving task to receive multicasts until disposed
-            // pollingJob = scheduler.schedule(() -> {
-            //    receiveMcast();
-            // }, 0, TimeUnit.SECONDS);
 
             // create polling job for periodically receive multicasts
-            // pollingJob = scheduler.schedule(this::receiveMcast, 0, TimeUnit.SECONDS);
-            pollingJob = scheduler.scheduleWithFixedDelay(this::receiveMcast, 1, DEFAULT_POLLING_TIME, TimeUnit.SECONDS);
+            pollingJob = scheduler.scheduleWithFixedDelay(this::receiveMcast, 1,
+                    OwlBindingConstants.DEFAULT_POLLING_TIME, TimeUnit.SECONDS);
             logger.info("Receive polling job started for '{}'", getThing().getUID());
 
             // initialize ready, set to OFFLINE temporarily until a valid multicast has been received
@@ -114,9 +111,9 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
         } catch (Exception ex) {
             // cannot create connection to Ucp broadcast
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.CONFIGURATION_ERROR,
-                String.format("%s on multicast connection '%s:%d'", 
-                ex.getMessage() != null ? ex.getMessage() : ex.getClass().toString(),
-                multicastGroup, multicastPort));
+                    String.format("%s on multicast connection '%s:%d'",
+                            ex.getMessage() != null ? ex.getMessage() : ex.getClass().toString(), multicastGroup,
+                            multicastPort));
         }
     }
 
@@ -132,6 +129,8 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
             multicastSocket.close();
             multicastSocket = null;
         }
+        // clear all packets
+        energyPacket = null;
         logger.info("Handler '{}' disposed", getThing().getUID());
     }
 
@@ -141,50 +140,64 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
      */
     private synchronized void receiveMcast() {
         // receive multicasts until the handler should be disposed
-        // while (!pollingJob.isCancelled()) {
-            // try to receive a multicast within given timeout
-            try {
-                byte[] bytes = new byte[8192];
-                DatagramPacket msgPacket = new DatagramPacket(bytes, bytes.length);
-                multicastSocket.receive(msgPacket);
+        // try to receive a multicast within given timeout
+        try {
+            byte[] bytes = new byte[2048];
+            DatagramPacket msgPacket = new DatagramPacket(bytes, bytes.length);
+            multicastSocket.receive(msgPacket);
+
+            // get data as string
+            String packetData = new String(bytes, 0, msgPacket.getLength());
+
+            // provide the data as energy packet
+            logger.info("Is energy packet? '{}'", EnergyPacket.isEnergyPacket(packetData));
+
+            if (EnergyPacket.isEnergyPacket(packetData)) {
+                energyPacket = EnergyPacket.parsePacket(packetData);
 
                 /// TODO wieder raus!
-                logger.info("Received multicast with length {}.", msgPacket.getLength());
-
-                /*
-                String sma = new String(Arrays.copyOfRange(bytes, 0x00, 0x03));
-                if (!sma.equals("SMA")) {
-                throw new IOException("Not a SMA telegram." + sma);
-                }
-                
-                ByteBuffer buffer = ByteBuffer.wrap(Arrays.copyOfRange(bytes, 0x14, 0x18));
-                serialNumber = String.valueOf(buffer.getInt());
-                
-                powerIn.updateValue(bytes);
-                energyIn.updateValue(bytes);
-                powerOut.updateValue(bytes);
-                energyOut.updateValue(bytes);
-                */
-
-                // if we are still not online, we are now
-                if (getThing().getStatus().equals(ThingStatus.ONLINE) == false) {
-                    updateStatus(ThingStatus.ONLINE);
-                }
-            } catch (Exception ex) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR,
-                            ex.getMessage() != null ? ex.getMessage() : ex.getClass().toString());
-                // clean up connection
-                // break;
+                logger.info("Received energy packet from '{}'", energyPacket.getId());
             }
-        // }
+
+            /// TODO wieder raus!
+            // logger.info("Received multicast with data: {}", packetData);
+
+            /*
+            String sma = new String(Arrays.copyOfRange(bytes, 0x00, 0x03));
+            if (!sma.equals("SMA")) {
+            throw new IOException("Not a SMA telegram." + sma);
+            }
+            
+            ByteBuffer buffer = ByteBuffer.wrap(Arrays.copyOfRange(bytes, 0x14, 0x18));
+            serialNumber = String.valueOf(buffer.getInt());
+            
+            powerIn.updateValue(bytes);
+            energyIn.updateValue(bytes);
+            powerOut.updateValue(bytes);
+            energyOut.updateValue(bytes);
+            */
+
+            // if we are still not online, we are now
+            if (getThing().getStatus().equals(ThingStatus.ONLINE) == false) {
+                updateStatus(ThingStatus.ONLINE);
+            }
+        } catch (Exception ex) {
+            // timeout occurred waiting for a packet
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR,
+                    ex.getMessage() != null ? ex.getMessage() : ex.getClass().toString());
+            // reset received packet, connected things can check for not null
+            // to determine if a valid packes has been received
+            energyPacket = null;
+        }
     }
     
     /**
-     * Check if brigde is online.
-     * This is the case, if we receive multicast packages periodically
-     * @return onlineState
+     * Access to the received energy packet data
+     * @return
      */
-    public boolean isOnline() {
-        return getThing().getStatus().equals(ThingStatus.ONLINE);
+    @Nullable
+    public EnergyPacket getEnergyPacket() {
+        return energyPacket;
     }
+    
 }
