@@ -54,7 +54,7 @@
 		<label>Energy</label>
 		<description>Accumulated daily energy consumption.</description>
 		<category>Energy</category>
-		<state pattern="%.3f kWh" readOnly="true"/>
+		<state pattern="%.2f %unit%" readOnly="true"/>
 	</channel-type>
 
 	<channel-type id="power">

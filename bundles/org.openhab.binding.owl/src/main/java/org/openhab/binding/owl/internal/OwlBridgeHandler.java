@@ -58,7 +58,8 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (command == RefreshType.REFRESH) {
-            
+            /// TODO wieder raus!
+            logger.info("Refreshing {}", channelUID);
         } else {
             logger.warn("This binding is a read-only binding and cannot handle commands");
         }
@@ -92,6 +93,7 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
             multicastSocket.setReuseAddress(true);
             multicastSocket.setSoTimeout(timeoutMinutes * 60 * 1000);
             multicastSocket.joinGroup(address);
+            /// TODO wieder debug!
             logger.info("UDP multicast socket opened on '{}:{}' with {} minutes timeout", multicastGroup, multicastPort,
                     timeoutMinutes);
 
@@ -103,6 +105,7 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
             // create polling job for periodically receive multicasts
             pollingJob = scheduler.scheduleWithFixedDelay(this::receiveMcast, 1,
                     OwlBindingConstants.DEFAULT_POLLING_TIME, TimeUnit.SECONDS);
+            /// TODO wieder debug!
             logger.info("Receive polling job started for '{}'", getThing().getUID());
 
             // initialize ready, set to OFFLINE temporarily until a valid multicast has been received
@@ -131,6 +134,7 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
         }
         // clear all packets
         energyPacket = null;
+        /// TODO wieder debug!
         logger.info("Handler '{}' disposed", getThing().getUID());
     }
 
@@ -146,36 +150,18 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
             DatagramPacket datagram = new DatagramPacket(bytes, bytes.length);
             multicastSocket.receive(datagram);
             String packetData = new String(bytes, 0, datagram.getLength());
-
             EnergyPacket packet = new EnergyPacket(packetData);
 
-            // provide the data as energy packet
-            logger.info("Is energy packet? '{}'", packet.isEnergyPacket());
+            /// TODO wieder raus!
+            logger.info("Received multicast (isEnergyPacket='{}')", packet.isEnergyPacket());
 
+            // assign received packets for getters for connected things
             if (packet.isEnergyPacket()) {
                 energyPacket = packet;
-
-                /// TODO wieder raus!
-                logger.info("Received energy packet from '{}'", energyPacket.getId());
-            }
-
-            /// TODO wieder raus!
-            // logger.info("Received multicast with data: {}", packetData);
-
-            /*
-            String sma = new String(Arrays.copyOfRange(bytes, 0x00, 0x03));
-            if (!sma.equals("SMA")) {
-            throw new IOException("Not a SMA telegram." + sma);
-            }
-            
-            ByteBuffer buffer = ByteBuffer.wrap(Arrays.copyOfRange(bytes, 0x14, 0x18));
-            serialNumber = String.valueOf(buffer.getInt());
-            
-            powerIn.updateValue(bytes);
-            energyIn.updateValue(bytes);
-            powerOut.updateValue(bytes);
-            energyOut.updateValue(bytes);
-            */
+            } else {
+               /// TODO wieder debug!
+               logger.info("Received unknown packet with data '{}'", packetData);
+            } 
 
             // if we are still not online, we are now
             if (getThing().getStatus().equals(ThingStatus.ONLINE) == false) {

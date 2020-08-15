@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
@@ -48,7 +47,8 @@ public class OwlEnergyHandler extends BaseThingHandler {
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (command == RefreshType.REFRESH) {
-            logger.debug("Refreshing {}", channelUID);
+            /// TODO wieder raus!
+            logger.info("Refreshing {}", channelUID);
             updateData();
         } else {
             logger.warn("This binding is a read-only binding and cannot handle commands");
@@ -63,7 +63,10 @@ public class OwlEnergyHandler extends BaseThingHandler {
         scheduler.submit(() -> {
         });
         // create polling job for periodically update data received thru bridge
-        pollingJob = scheduler.scheduleWithFixedDelay(this::updateData, 1, OwlBindingConstants.DEFAULT_POLLING_TIME, TimeUnit.SECONDS);
+        // first let bridge start, we wait for another 10 seconds
+        pollingJob = scheduler.scheduleWithFixedDelay(this::updateData, 10, OwlBindingConstants.DEFAULT_POLLING_TIME,
+                TimeUnit.SECONDS);
+        /// TODO wieder debug!
         logger.info("Receive polling job started for '{}'", getThing().getUID());
         updateStatus(ThingStatus.OFFLINE);
     }
@@ -75,22 +78,26 @@ public class OwlEnergyHandler extends BaseThingHandler {
             pollingJob.cancel(true);
             pollingJob = null;
         }
+        /// TODO wieder debug!
         logger.info("Handler '{}' disposed", getThing().getUID());
     }
 
+    /**
+     * Get energy packet from bridge
+     * and update the channels of the thing
+     */
     private void updateData() {
         // check if bridge has a valid energy packet for us
         OwlBridgeHandler handler = (OwlBridgeHandler) getBridge().getHandler();
         EnergyPacket packet = handler.getEnergyPacket();
         if (packet != null) {
-            logger.info("Packet processed...");
             // update the data for the thing
-            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_1, new DecimalType(packet.getPhase1().getPower()));
-            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_2, new DecimalType(packet.getPhase2().getPower()));
-            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_3, new DecimalType(packet.getPhase3().getPower()));
-            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_1, new DecimalType(packet.getPhase1().getEnergy()));
-            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_2, new DecimalType(packet.getPhase2().getEnergy()));
-            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_3, new DecimalType(packet.getPhase3().getEnergy()));
+            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_1, packet.getPhase1().getPower());
+            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_2, packet.getPhase2().getPower());
+            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_3, packet.getPhase3().getPower());
+            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_1, packet.getPhase1().getEnergy());
+            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_2, packet.getPhase2().getEnergy());
+            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_3, packet.getPhase3().getEnergy());
             // if we are not online already, we are now
             if (getThing().getStatus().equals(ThingStatus.OFFLINE)) {
                 updateStatus(ThingStatus.ONLINE);

@@ -56,12 +56,12 @@ public class EnergyPacketTest {
         assertNotEquals(null, packet);
         assertEquals(true, packet.isEnergyPacket());
         assertEquals("AA37190017BB", packet.getId());
-        assertEquals(32.0, packet.getPhase1().getPower(), 0.0001);
-        assertEquals(1157.67, packet.getPhase1().getEnergy(), 0.0001);
-        assertEquals(370.0, packet.getPhase2().getPower(), 0.0001);
-        assertEquals(2852.27, packet.getPhase2().getEnergy(), 0.0001);
-        assertEquals(80.0, packet.getPhase3().getPower(), 0.0001);
-        assertEquals(2318.14, packet.getPhase3().getEnergy(), 0.0001);
+        assertEquals(32.0, packet.getPhase1().getPower().doubleValue(), 0.0001);
+        assertEquals(1157.67, packet.getPhase1().getEnergy().doubleValue(), 0.0001);
+        assertEquals(370.0, packet.getPhase2().getPower().doubleValue(), 0.0001);
+        assertEquals(2852.27, packet.getPhase2().getEnergy().doubleValue(), 0.0001);
+        assertEquals(80.0, packet.getPhase3().getPower().doubleValue(), 0.0001);
+        assertEquals(2318.14, packet.getPhase3().getEnergy().doubleValue(), 0.0001);
     }
 
     @Test

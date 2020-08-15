@@ -12,7 +12,8 @@
  */
 package org.openhab.binding.owl.internal.packets;
 
-import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.smarthome.core.library.types.QuantityType;
+import org.eclipse.smarthome.core.library.unit.SmartHomeUnits;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -33,12 +34,12 @@ public class EnergyPacket extends AbstractPacket {
             this.power = power;
         }
 
-        public double getEnergy() {
-            return energy;
+        public QuantityType<?> getEnergy() {
+            return new QuantityType<>(energy, SmartHomeUnits.WATT_HOUR);
         }
 
-        public double getPower() {
-            return power;
+        public QuantityType<?> getPower() {
+            return new QuantityType<>(power, SmartHomeUnits.WATT);
         }
     }
 
@@ -47,9 +48,9 @@ public class EnergyPacket extends AbstractPacket {
      */
     private boolean validPacket;
     private String id;
-    private @NonNull EnergyPacketPhase phase_1;
-    private @NonNull EnergyPacketPhase phase_2;
-    private @NonNull EnergyPacketPhase phase_3;
+    private EnergyPacketPhase phase_1;
+    private EnergyPacketPhase phase_2;
+    private EnergyPacketPhase phase_3;
 
     /**
      * Create a new packet from given data
