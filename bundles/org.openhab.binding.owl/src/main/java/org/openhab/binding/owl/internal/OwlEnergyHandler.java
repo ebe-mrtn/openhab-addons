@@ -24,6 +24,7 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
+import org.eclipse.smarthome.core.types.UnDefType;
 import org.openhab.binding.owl.internal.packets.EnergyPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class OwlEnergyHandler extends BaseThingHandler {
             logger.warn("This binding is a read-only binding and cannot handle commands");
         }
     }
-    
+
     @Override
     public void initialize() {
         updateStatus(ThingStatus.UNKNOWN);
@@ -62,14 +63,14 @@ public class OwlEnergyHandler extends BaseThingHandler {
         scheduler.submit(() -> {
         });
         // create polling job for periodically update data received thru bridge
-        // first let bridge start, we wait for another 10 seconds
-        pollingJob = scheduler.scheduleWithFixedDelay(this::updateData, 10, OwlBindingConstants.DEFAULT_POLLING_TIME,
+        // first let bridge start, we wait a little longer
+        pollingJob = scheduler.scheduleWithFixedDelay(this::updateData, 5, OwlBindingConstants.DEFAULT_POLLING_TIME,
                 TimeUnit.SECONDS);
         /// TODO wieder debug!
         logger.info("Receive polling job started for '{}'", getThing().getUID());
         updateStatus(ThingStatus.OFFLINE);
     }
-    
+
     @Override
     public void dispose() {
         // stop waiting for multicasts
@@ -103,6 +104,14 @@ public class OwlEnergyHandler extends BaseThingHandler {
             if (getThing().getStatus().equals(ThingStatus.OFFLINE)) {
                 updateStatus(ThingStatus.ONLINE);
             }
+        } else {
+            // cannot update thing, reset channel values 
+            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_1, UnDefType.NULL);
+            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_2, UnDefType.NULL);
+            updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_3, UnDefType.NULL);
+            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_1, UnDefType.NULL);
+            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_2, UnDefType.NULL);
+            updateState(OwlBindingConstants.CHANNEL_ENERGY_PHASE_3, UnDefType.NULL);
         }
     }
 }
