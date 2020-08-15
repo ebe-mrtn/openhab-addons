@@ -143,17 +143,17 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
         // try to receive a multicast within given timeout
         try {
             byte[] bytes = new byte[2048];
-            DatagramPacket msgPacket = new DatagramPacket(bytes, bytes.length);
-            multicastSocket.receive(msgPacket);
+            DatagramPacket datagram = new DatagramPacket(bytes, bytes.length);
+            multicastSocket.receive(datagram);
+            String packetData = new String(bytes, 0, datagram.getLength());
 
-            // get data as string
-            String packetData = new String(bytes, 0, msgPacket.getLength());
+            EnergyPacket packet = new EnergyPacket(packetData);
 
             // provide the data as energy packet
-            logger.info("Is energy packet? '{}'", EnergyPacket.isEnergyPacket(packetData));
+            logger.info("Is energy packet? '{}'", packet.isEnergyPacket());
 
-            if (EnergyPacket.isEnergyPacket(packetData)) {
-                energyPacket = EnergyPacket.parsePacket(packetData);
+            if (packet.isEnergyPacket()) {
+                energyPacket = packet;
 
                 /// TODO wieder raus!
                 logger.info("Received energy packet from '{}'", energyPacket.getId());

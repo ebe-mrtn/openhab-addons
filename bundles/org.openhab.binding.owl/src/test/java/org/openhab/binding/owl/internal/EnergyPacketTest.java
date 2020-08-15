@@ -15,8 +15,11 @@ package org.openhab.binding.owl.internal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.openhab.binding.owl.internal.packets.EnergyPacket;
+import org.openhab.binding.owl.internal.packets.PacketParseException;
 
 /**
  * Testing parsing algorithm energy packets from the network owl
@@ -42,13 +45,16 @@ public class EnergyPacketTest {
     "       <day units='wh'>2318.14</day>\n" +
     "    </chan>\n" +
     "</electricity>";
-    
-    private final String originalPacket = "<electricity id='AA37190017BB'><signal rssi='-36' lqi='13'/><battery level='100%'/><chan id='0'><curr units='w'>338.00</curr><day units='wh'>2783.06</day></chan><chan id='1'><curr units='w'>305.00</curr><day units='wh'>2678.55</day></chan><chan id='2'><curr units='w'>48.00</curr><day units='wh'>1017.71</day></chan></electricity>";
-    
+        
+    private final String emptyPacket = "";
+    private final String otherPacket = "<other id='23'></other>";
+    private final String incompletePacket = "<electricity id='AABB'></electricity>";
+
     @Test
-    public void ParseValidPacket() {
-        final EnergyPacket packet = EnergyPacket.parsePacket(validPacket);
+    public void ParseValidPacket() throws PacketParseException {
+        final EnergyPacket packet = new EnergyPacket(validPacket);
         assertNotEquals(null, packet);
+        assertEquals(true, packet.isEnergyPacket());
         assertEquals("AA37190017BB", packet.getId());
         assertEquals(32.0, packet.getPhase1().getPower(), 0.0001);
         assertEquals(1157.67, packet.getPhase1().getEnergy(), 0.0001);
@@ -59,21 +65,41 @@ public class EnergyPacketTest {
     }
 
     @Test
-    public void CheckValidPacket() {
-        final Boolean isEnergyPacket = EnergyPacket.isEnergyPacket(validPacket);
+    public void CheckValidPacket()  throws PacketParseException {
+        final EnergyPacket packet = new EnergyPacket(validPacket);
+        final Boolean isEnergyPacket = packet.isEnergyPacket();
         assertEquals(true, isEnergyPacket);
     }
 
+    
+    @Rule
+    public final ExpectedException exception = ExpectedException.none();
+    
     @Test
-    public void CheckOriginalPacket() {
-        final Boolean isEnergyPacket = EnergyPacket.isEnergyPacket(originalPacket);
-        assertEquals(true, isEnergyPacket);
+    public void ParseEmptyPacket()  throws PacketParseException {
+        exception.expect(PacketParseException.class);
+        final EnergyPacket packet = new EnergyPacket(emptyPacket);
+        assertEquals(null, packet);
     }
 
     @Test
-    public void ParseOriginalPacket() {
-        final EnergyPacket packet = EnergyPacket.parsePacket(originalPacket);
-        assertNotEquals(null, packet);
-        assertEquals("AA37190017BB", packet.getId());
+    public void ParseOtherPacket() throws PacketParseException {
+        final EnergyPacket packet = new EnergyPacket(otherPacket);
+        assertEquals(false, packet.isEnergyPacket());
+        assertEquals(null, packet.getId());
+        assertEquals(null, packet.getPhase1());
+        assertEquals(null, packet.getPhase2());
+        assertEquals(null, packet.getPhase3());
+    }
+
+    @Test
+    public void ParseIncompletePacket() throws PacketParseException {
+        exception.expect(PacketParseException.class);
+        final EnergyPacket packet = new EnergyPacket(incompletePacket);
+        assertEquals(true, packet.isEnergyPacket());
+        assertEquals("AABB", packet.getId());
+        assertEquals(null, packet.getPhase1());
+        assertEquals(null, packet.getPhase2());
+        assertEquals(null, packet.getPhase3());
     }
 }
