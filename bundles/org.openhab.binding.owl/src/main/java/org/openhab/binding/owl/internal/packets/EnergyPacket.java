@@ -103,6 +103,12 @@ public class EnergyPacket extends AbstractPacket {
             final Element chan2Day = getElementByPath(doc, "/electricity/chan[@id='2']/day");
 
             id = rootElement.getAttribute("id");
+
+            // unit creation, not useful because unit is displayed with wrong letter case...
+            // assume units will be W and Wh always...
+            // String unitString = chan0Curr.getAttribute("units");
+            // Unit<?> unit = UnitUtils.parseUnit("0 " + unitString.toUpperCase());
+
             phase_1 = new EnergyPacketPhase(stringToDouble(chan0Curr.getTextContent()), stringToDouble(chan0Day.getTextContent()));
             phase_2 = new EnergyPacketPhase(stringToDouble(chan1Curr.getTextContent()), stringToDouble(chan1Day.getTextContent()));
             phase_3 = new EnergyPacketPhase(stringToDouble(chan2Curr.getTextContent()), stringToDouble(chan2Day.getTextContent()));
