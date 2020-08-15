@@ -12,6 +12,7 @@
  */
 package org.openhab.binding.owl.internal.packets;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.smarthome.core.library.types.QuantityType;
 import org.eclipse.smarthome.core.library.unit.SmartHomeUnits;
 import org.w3c.dom.Document;
@@ -23,11 +24,22 @@ import org.w3c.dom.Element;
  * 
  * @author Martin Ebeling - Initial contribution
  */
+@NonNullByDefault
 public class EnergyPacket extends AbstractPacket {
 
+    /**
+     * Internal class for energy and power
+     * representation of a single phase.
+     * 
+     * @author Martin Ebeling - Initial contribution
+     */
+    @NonNullByDefault
     public class EnergyPacketPhase {
         private double energy = 0.0;
         private double power = 0.0;
+
+        public EnergyPacketPhase() {
+        }
 
         public EnergyPacketPhase(double power, double energy) {
             this.energy = energy;
@@ -46,18 +58,10 @@ public class EnergyPacket extends AbstractPacket {
     /**
      * extracted data from the packet
      */
-    private boolean validPacket;
-    private String id;
-    private EnergyPacketPhase phase_1;
-    private EnergyPacketPhase phase_2;
-    private EnergyPacketPhase phase_3;
-
-    /**
-     * Create a new packet from given data
-     */
-    public EnergyPacket(String packetData) throws PacketParseException {
-        super(packetData);
-    }
+    private String id = "";
+    private EnergyPacketPhase phase_1 = new EnergyPacketPhase();
+    private EnergyPacketPhase phase_2 = new EnergyPacketPhase();
+    private EnergyPacketPhase phase_3 = new EnergyPacketPhase();
 
     public String getId() {
         return id;
@@ -75,21 +79,6 @@ public class EnergyPacket extends AbstractPacket {
         return phase_3;
     }
     
-    /**
-     * Check if the packetData parsing identified something
-     * which should be an electritity packet.
-     * @return true if string is XML document with root node 'electricity'
-     */
-    public boolean isEnergyPacket() {
-        return validPacket;
-    }
-    
-    /**
-     * Parse string data to an energy packet
-     * @param packetData
-     * @return new EnergyPacket if parsing succeeded
-     * @throws PacketParseException if something went wrong parsing the string to packet data
-     */
     @Override
     protected void parsePacket(final String packetData) throws PacketParseException {
         try {
@@ -118,12 +107,11 @@ public class EnergyPacket extends AbstractPacket {
     }
 
     @Override
-    protected boolean isExpectedPacket(String packetData) throws PacketParseException {
+    protected boolean checkExpected(String packetData) throws PacketParseException {
         try {
             final Document doc = convertStringToDocument(packetData);
             final Element rootElement = getElementByPath(doc, "/electricity");
-            validPacket = (rootElement != null);
-            return (validPacket);
+            return (rootElement != null);
         } catch (final Exception e) {
             throw new PacketParseException("Failed to identify packet", e);
         }

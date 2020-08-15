@@ -46,9 +46,8 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
     private int multicastPort = OwlBindingConstants.DEFAULT_MCAST_PORT;
     private int timeoutMinutes = OwlBindingConstants.DEFAULT_TIMEOUT_MINS;
 
-    private @Nullable ScheduledFuture<?> pollingJob;
-    private @Nullable MulticastSocket multicastSocket;
-
+    private @Nullable ScheduledFuture<?> pollingJob = null;
+    private @Nullable MulticastSocket multicastSocket = null;
     private @Nullable EnergyPacket energyPacket = null;
 
     public OwlBridgeHandler(Bridge bridge) {
@@ -76,23 +75,22 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
     public void initialize() {
         // get config parameters or defaults
         config = getConfigAs(OwlConfiguration.class);
-        multicastPort = (config.mcastPort == null) ? 
-                        OwlBindingConstants.DEFAULT_MCAST_PORT : config.mcastPort;
-        multicastGroup = (config.mcastGroup == null) ? 
-                         OwlBindingConstants.DEFAULT_MCAST_GRP : config.mcastGroup;
-        timeoutMinutes = (config.timoutInterval == null) ? 
-                         OwlBindingConstants.DEFAULT_TIMEOUT_MINS : config.timoutInterval;
+        multicastPort = config.mcastPort;
+        multicastGroup = config.mcastGroup;
+        timeoutMinutes = config.timoutInterval;
 
         // set the thing status to UNKNOWN temporarily
         updateStatus(ThingStatus.UNKNOWN);
 
         try {
             // initialize the multicast client
-            InetAddress address = InetAddress.getByName(multicastGroup);
-            multicastSocket = new MulticastSocket(multicastPort);
-            multicastSocket.setReuseAddress(true);
-            multicastSocket.setSoTimeout(timeoutMinutes * 60 * 1000);
-            multicastSocket.joinGroup(address);
+            final InetAddress address = InetAddress.getByName(multicastGroup);
+            final MulticastSocket ms = new MulticastSocket(multicastPort);
+            ms.setReuseAddress(true);
+            ms.setSoTimeout(timeoutMinutes * 60 * 1000);
+            ms.joinGroup(address);
+            multicastSocket = ms;
+
             /// TODO wieder debug!
             logger.info("UDP multicast socket opened on '{}:{}' with {} minutes timeout", multicastGroup, multicastPort,
                     timeoutMinutes);
@@ -123,15 +121,17 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
     @Override
     public void dispose() {
         // stop waiting for multicasts
-        if (pollingJob != null) {
-            pollingJob.cancel(true);
-            pollingJob = null;
+        final ScheduledFuture<?> pj = pollingJob;
+        if (pj != null) {
+            pj.cancel(true);
         }
+        pollingJob = null;
         // close multicast listener, to abort receive
-        if (multicastSocket != null) {
-            multicastSocket.close();
-            multicastSocket = null;
+        final MulticastSocket ms = multicastSocket;
+        if (ms != null) {
+            ms.close();
         }
+        multicastSocket = null;
         // clear all packets
         energyPacket = null;
         /// TODO wieder debug!
@@ -146,17 +146,23 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
         // receive multicasts until the handler should be disposed
         // try to receive a multicast within given timeout
         try {
-            byte[] bytes = new byte[2048];
-            DatagramPacket datagram = new DatagramPacket(bytes, bytes.length);
-            multicastSocket.receive(datagram);
-            String packetData = new String(bytes, 0, datagram.getLength());
-            EnergyPacket packet = new EnergyPacket(packetData);
+            final byte[] bytes = new byte[2048];
+            final DatagramPacket datagram = new DatagramPacket(bytes, bytes.length);
+            final MulticastSocket ms = multicastSocket;
+            
+            // blocking receive of multicast message until timeout
+            ms.receive(datagram);
+
+            // process received data, timout on receive will directly trigger catch block
+            final String packetData = new String(bytes, 0, datagram.getLength());
+            final EnergyPacket packet = new EnergyPacket();
+            packet.read(packetData);
 
             /// TODO wieder raus!
-            logger.info("Received multicast (isEnergyPacket='{}')", packet.isEnergyPacket());
+            logger.info("Received multicast (isEnergyPacket='{}')", packet.isExpected());
 
             // assign received packets for getters for connected things
-            if (packet.isEnergyPacket()) {
+            if (packet.isParsed()) {
                 energyPacket = packet;
             } else {
                /// TODO wieder debug!

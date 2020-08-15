@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
@@ -37,8 +38,7 @@ import org.slf4j.LoggerFactory;
 public class OwlEnergyHandler extends BaseThingHandler {
 
     private final Logger logger = LoggerFactory.getLogger(OwlEnergyHandler.class);
-    private @Nullable ScheduledFuture<?> pollingJob;
-    private @Nullable OwlConfiguration config;
+    private @Nullable ScheduledFuture<?> pollingJob = null;
 
     public OwlEnergyHandler(Thing thing) {
         super(thing);
@@ -57,7 +57,6 @@ public class OwlEnergyHandler extends BaseThingHandler {
     
     @Override
     public void initialize() {
-        config = getConfigAs(OwlConfiguration.class);
         updateStatus(ThingStatus.UNKNOWN);
         // schedule an init job, which does nothing to initialize the sheduler
         scheduler.submit(() -> {
@@ -74,10 +73,11 @@ public class OwlEnergyHandler extends BaseThingHandler {
     @Override
     public void dispose() {
         // stop waiting for multicasts
-        if (pollingJob != null) {
-            pollingJob.cancel(true);
-            pollingJob = null;
-        }
+        final ScheduledFuture<?> pj = pollingJob;
+        if (pj != null)
+            pj.cancel(true);
+        pollingJob = null;
+
         /// TODO wieder debug!
         logger.info("Handler '{}' disposed", getThing().getUID());
     }
@@ -88,8 +88,9 @@ public class OwlEnergyHandler extends BaseThingHandler {
      */
     private void updateData() {
         // check if bridge has a valid energy packet for us
-        OwlBridgeHandler handler = (OwlBridgeHandler) getBridge().getHandler();
-        EnergyPacket packet = handler.getEnergyPacket();
+        Bridge bridge = getBridge();
+        OwlBridgeHandler handler = (bridge != null) ? (OwlBridgeHandler)bridge.getHandler() : null;
+        EnergyPacket packet = (handler != null) ? handler.getEnergyPacket() : null;
         if (packet != null) {
             // update the data for the thing
             updateState(OwlBindingConstants.CHANNEL_POWER_PHASE_1, packet.getPhase1().getPower());

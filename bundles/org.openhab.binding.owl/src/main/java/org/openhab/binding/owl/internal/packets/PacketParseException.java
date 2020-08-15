@@ -12,10 +12,13 @@
  */
 package org.openhab.binding.owl.internal.packets;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+
 /**
  * 
  * @author Martin Ebeling - Initial contribution
  */
+@NonNullByDefault
 @SuppressWarnings("serial")
 public class PacketParseException extends Exception {
     public PacketParseException() {

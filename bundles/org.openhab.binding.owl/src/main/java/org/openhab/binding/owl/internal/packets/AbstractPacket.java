@@ -26,6 +26,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -37,17 +38,48 @@ import org.xml.sax.SAXException;
  * 
  * @author Martin Ebeling - Initial contribution
  */
+@NonNullByDefault
 public abstract class AbstractPacket {
     
+    private boolean isExpectedPacket = false;
+    private boolean isParsedPacket = false;
+
     /**
-     * Create new packet from string.
-     * If the packet data contains expected data, try to parse the data to packet.
-     * @param packetData XML string defining the packet data
-     * @throws PacketParseException If parsing failed
+     * Check if data was expeted for parsing by
+     * this class, after called read()
+     * @return true if data seemed to be of type for expected package parsing
      */
-    public AbstractPacket(final String packetData) throws PacketParseException {
-        if (isExpectedPacket(packetData))
+    public boolean isExpected() {
+        return isExpectedPacket;
+    }
+
+    /**
+     * Check if data has been successfully
+     * parsed by the read() function
+     * @return true if data has been parsed
+     */
+    public boolean isParsed() {
+        return isParsedPacket;
+    }
+
+    /**
+     * Read the string and check if it may be a expected packet 
+     * by checking the root node within derived class.
+     * If the data is expected, try to read and parse the values.
+     * @param packetData : Data representing the packet
+     * @return true if the data was expected and has been parsed
+     * @throws PacketParseException
+     */
+    public boolean read(final String packetData) throws PacketParseException {
+        isExpectedPacket = checkExpected(packetData);
+        isParsedPacket = false;
+
+        if (isExpectedPacket) {
             parsePacket(packetData);
+            isParsedPacket = true;
+        }
+
+        return (isExpectedPacket && isParsedPacket);
     }
 
     /**
@@ -64,7 +96,7 @@ public abstract class AbstractPacket {
      * @param packetData
      * @return true if string is XML document should be packet for our type
      */
-    protected abstract boolean isExpectedPacket(final String packetData) throws PacketParseException;
+    protected abstract boolean checkExpected(final String packetData) throws PacketParseException;
 
     /**
      * Parse double values from string
