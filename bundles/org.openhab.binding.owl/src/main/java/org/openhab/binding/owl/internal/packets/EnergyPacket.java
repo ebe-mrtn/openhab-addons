@@ -13,6 +13,7 @@
 package org.openhab.binding.owl.internal.packets;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.library.types.QuantityType;
 import org.eclipse.smarthome.core.library.unit.SmartHomeUnits;
 import org.w3c.dom.Document;
@@ -33,7 +34,6 @@ public class EnergyPacket extends AbstractPacket {
      * 
      * @author Martin Ebeling - Initial contribution
      */
-    @NonNullByDefault
     public class EnergyPacketPhase {
         private double energy = 0.0;
         private double power = 0.0;
@@ -80,37 +80,74 @@ public class EnergyPacket extends AbstractPacket {
     }
     
     @Override
-    protected void parsePacket(final String packetData) throws PacketParseException {
+    protected boolean parsePacket(final String packetData) throws PacketParseException {
+        boolean returnValue = true;
         try {
-            final Document doc = convertStringToDocument(packetData);
-            final Element rootElement = getElementByPath(doc, "/electricity");
-            final Element chan0Curr = getElementByPath(doc, "/electricity/chan[@id='0']/curr");
-            final Element chan0Day = getElementByPath(doc, "/electricity/chan[@id='0']/day");
-            final Element chan1Curr = getElementByPath(doc, "/electricity/chan[@id='1']/curr");
-            final Element chan1Day = getElementByPath(doc, "/electricity/chan[@id='1']/day");
-            final Element chan2Curr = getElementByPath(doc, "/electricity/chan[@id='2']/curr");
-            final Element chan2Day = getElementByPath(doc, "/electricity/chan[@id='2']/day");
+            final @Nullable Document doc = convertStringToDocument(packetData);
+            final @Nullable Element rootElement = getElementByPath(doc, "/electricity");
+            final @Nullable Element chan0Curr = getElementByPath(doc, "/electricity/chan[@id='0']/curr");
+            final @Nullable Element chan0Day = getElementByPath(doc, "/electricity/chan[@id='0']/day");
+            final @Nullable Element chan1Curr = getElementByPath(doc, "/electricity/chan[@id='1']/curr");
+            final @Nullable Element chan1Day = getElementByPath(doc, "/electricity/chan[@id='1']/day");
+            final @Nullable Element chan2Curr = getElementByPath(doc, "/electricity/chan[@id='2']/curr");
+            final @Nullable Element chan2Day = getElementByPath(doc, "/electricity/chan[@id='2']/day");
 
-            id = rootElement.getAttribute("id");
+            // id
+            if (rootElement != null) {
+                id = rootElement.getAttribute("id");
+            } else {
+                id =  "invalid";
+                returnValue = false;
+            }
 
             // unit creation, not useful because unit is displayed with wrong letter case...
             // assume units will be W and Wh always...
             // String unitString = chan0Curr.getAttribute("units");
             // Unit<?> unit = UnitUtils.parseUnit("0 " + unitString.toUpperCase());
 
-            phase_1 = new EnergyPacketPhase(stringToDouble(chan0Curr.getTextContent()), stringToDouble(chan0Day.getTextContent()));
-            phase_2 = new EnergyPacketPhase(stringToDouble(chan1Curr.getTextContent()), stringToDouble(chan1Day.getTextContent()));
-            phase_3 = new EnergyPacketPhase(stringToDouble(chan2Curr.getTextContent()), stringToDouble(chan2Day.getTextContent()));
+            // phase 1
+            if (chan0Curr != null && chan0Day != null) {
+                phase_1 = new EnergyPacketPhase(stringToDouble(chan0Curr.getTextContent()),
+                        stringToDouble(chan0Day.getTextContent()));
+            }
+            else {
+                phase_1 = new EnergyPacketPhase();
+                returnValue = false;
+            }
+
+            // phase 2
+            if (chan1Curr != null && chan1Day != null) {
+                phase_2 = new EnergyPacketPhase(stringToDouble(chan1Curr.getTextContent()),
+                        stringToDouble(chan1Day.getTextContent()));
+            }
+            else {
+                phase_2 = new EnergyPacketPhase();
+                returnValue = false;
+            }
+
+            // phase 3
+            if (chan2Curr != null && chan2Day != null) {
+                phase_3 = new EnergyPacketPhase(stringToDouble(chan2Curr.getTextContent()),
+                        stringToDouble(chan2Day.getTextContent()));
+            }
+            else {
+                phase_3 = new EnergyPacketPhase();
+                returnValue = false;
+            }
         } catch (final Exception e) {
-            throw new PacketParseException("Failed to parse energy packet", e);
+            throw new PacketParseException("Failed to parse packet", e);
         }
+
+        // all parsing steps succeeded,
+        // will return false if at least one parameter cannot be read
+        return returnValue;
     }
 
     @Override
     protected boolean checkExpected(String packetData) throws PacketParseException {
         try {
-            final Document doc = convertStringToDocument(packetData);
-            final Element rootElement = getElementByPath(doc, "/electricity");
+            final @Nullable Document doc = convertStringToDocument(packetData);
+            final @Nullable Element rootElement = getElementByPath(doc, "/electricity");
             return (rootElement != null);
         } catch (final Exception e) {
             throw new PacketParseException("Failed to identify packet", e);

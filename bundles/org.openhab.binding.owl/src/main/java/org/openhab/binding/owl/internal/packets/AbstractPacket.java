@@ -27,6 +27,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -75,8 +76,7 @@ public abstract class AbstractPacket {
         isParsedPacket = false;
 
         if (isExpectedPacket) {
-            parsePacket(packetData);
-            isParsedPacket = true;
+            isParsedPacket = parsePacket(packetData);;
         }
 
         return (isExpectedPacket && isParsedPacket);
@@ -85,10 +85,10 @@ public abstract class AbstractPacket {
     /**
      * Parse string data to an packet
      * @param packetData
-     * @return new T if parsing succeeded
+     * @return true if parsing succeeded
      * @throws PacketParseException if something went wrong parsing the string to packet data
      */
-    protected abstract void parsePacket(final String packetData) throws PacketParseException;
+    protected abstract boolean parsePacket(final String packetData) throws PacketParseException;
 
     /**
      * Check if the packetData contains something
@@ -122,7 +122,7 @@ public abstract class AbstractPacket {
      * @return
      * @throws XPathExpressionException
      */
-    protected static Element getElementByPath(Document doc, String path) 
+    protected static @Nullable Element getElementByPath(@Nullable Document doc, String path) 
             throws XPathExpressionException {
         final XPathFactory xpf = XPathFactory.newInstance();
         final XPath xpath = xpf.newXPath();
@@ -134,7 +134,7 @@ public abstract class AbstractPacket {
      * Convert a string to a DOM document 
      * for reading with XPath
      */
-    protected static Document convertStringToDocument(final String xmlStr)
+    protected static @Nullable Document convertStringToDocument(final String xmlStr)
             throws ParserConfigurationException, IOException, SAXException {
         final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         final DocumentBuilder builder = factory.newDocumentBuilder();

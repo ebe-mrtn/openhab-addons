@@ -151,20 +151,26 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
             final MulticastSocket ms = multicastSocket;
             
             // blocking receive of multicast message until timeout
-            ms.receive(datagram);
+            if (ms != null) {
+                /// TODO wieder raus!
+                logger.info("Waiting for multicast...");
+
+                ms.receive(datagram);
+
+                /// TODO wieder raus!
+                logger.info("... received multicast (length='{}')", datagram.getLength());
+            }
 
             // process received data, timout on receive will directly trigger catch block
             final String packetData = new String(bytes, 0, datagram.getLength());
             final EnergyPacket packet = new EnergyPacket();
             packet.read(packetData);
 
-            /// TODO wieder raus!
-            logger.info("Received multicast (isEnergyPacket='{}')", packet.isExpected());
-
             // assign received packets for getters for connected things
             if (packet.isParsed()) {
                 energyPacket = packet;
             } else {
+                energyPacket = null;
                /// TODO wieder debug!
                logger.info("Received unknown packet with data '{}'", packetData);
             } 
@@ -187,8 +193,7 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
      * Access to the received energy packet data
      * @return
      */
-    @Nullable
-    public EnergyPacket getEnergyPacket() {
+    public @Nullable EnergyPacket getEnergyPacket() {
         return energyPacket;
     }
     
