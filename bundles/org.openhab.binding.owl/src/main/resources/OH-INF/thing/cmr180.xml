@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="owl"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Sample Thing Type -->
+	<thing-type id="cmr180">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="bridge"/>
+		</supported-bridge-type-refs>
+		
+		<label>Owl Intuition CMR180(i)</label>
+		<description>Owl Intuition energy monitoring system</description>
+
+		<channels>
+			<channel id="powerPhase1" typeId="power">
+				<label>Power Phase 1</label>
+			</channel>
+			<channel id="powerPhase2" typeId="power">
+				<label>Power Phase 2</label>
+			</channel>
+			<channel id="powerPhase3" typeId="power">
+				<label>Power Phase 3</label>
+			</channel>
+			<channel id="energyPhase1" typeId="energy">
+				<label>Energy Phase 1</label>
+			</channel>
+			<channel id="energyPhase2" typeId="energy">
+				<label>Energy Phase 2</label>
+			</channel>
+			<channel id="energyPhase3" typeId="energy">
+				<label>Energy Phase 3</label>
+			</channel>
+			<!-- TODO other channels: battery, signal, timestamp? -->
+		</channels>
+
+		<config-description>
+			<parameter name="mode" type="text" required="true">
+				<label>Mode</label>
+				<description>Set mode of energy meter: 0 for single phase, 1 for 3 phase, 2 for PV (not yet supported)</description>
+				<default>1</default>
+				<required>true</required>
+				<advanced>true</advanced>
+			</parameter>
+			<!-- TODO other configs... -->
+		</config-description>
+
+	</thing-type>
+
+	<!-- Sample Channel Type -->
+	<channel-type id="energy">
+		<item-type>Number:Energy</item-type>
+		<label>Energy</label>
+		<description>Accumulated daily energy consumption.</description>
+		<category>Energy</category>
+		<state pattern="%.2f %unit%" readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="power">
+		<item-type>Number:Power</item-type>
+		<label>Power</label>
+		<description>Current power consumption.</description>
+		<category>Energy</category>
+		<state pattern="%.2f %unit%" readOnly="true"/>
+	</channel-type>
+
+</thing:thing-descriptions>

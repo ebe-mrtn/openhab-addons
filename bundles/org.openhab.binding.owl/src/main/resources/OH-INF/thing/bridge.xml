@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="owl" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Hue Bridge -->
+	<bridge-type id="bridge">
+		<label>Owl Bridge</label>
+		<description>The Network OWL is a bridge to OWL Intuition devices.</description>
+
+		<!--
+		<channels>
+			<channel id="scene" typeId="scene" />
+		</channels>
+		-->
+
+		<properties>
+			<property name="vendor">2 Save Energy Limited</property>
+		</properties>
+
+		<representation-property>macId</representation-property>
+
+		<config-description>
+			<parameter name="ipAddress" type="text">
+				<context>ipAddress</context>
+				<label>Network Address</label>
+				<description>Network address of the Network OWL</description>
+				<required>false</required>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="udpPort" type="integer" required="false" min="1024" max="49151">
+				<label>Port</label>
+				<description>Port of the UDP control channel</description>
+				<default>5100</default>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="udpKey" type="text">
+				<context>udpKey</context>
+				<label>UDP key</label>
+				<description>
+					Each Network OWL has its own UDP key, which can be requested from The OWL Customer services department.
+					This key is required to send control messages to the Network OWL. If key is not provided no control messages will be accepted.
+				</description>
+				<advanced>true</advanced>
+				<required>false</required>
+			</parameter>
+			<parameter name="mcastGroup" type="text" required="true">
+				<label>Multicast Group</label>
+				<description>IP address of the multicast group</description>
+				<default>224.192.32.19</default>
+				<advanced>true</advanced>
+				<required>true</required>
+			</parameter>
+			<parameter name="mcastPort" type="integer" required="false" min="1024" max="49151">
+				<label>Port</label>
+				<description>Port of the multicast group</description>
+				<default>22600</default>
+				<advanced>true</advanced>
+				<required>true</required>
+			</parameter>
+			<parameter name="timoutInterval" type="integer" min="1" max="10" step="1" unit="min">
+				<label>Timeout Interval</label>
+				<description>Minutes to timeout connection, if no multicast was received. Default is 5 minutes.</description>
+				<required>true</required>
+				<default>5</default>
+				<advanced>true</advanced>
+			</parameter>
+		</config-description>
+	</bridge-type>
+
+</thing:thing-descriptions>
