@@ -57,8 +57,6 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (command == RefreshType.REFRESH) {
-            /// TODO wieder raus!
-            logger.info("Refreshing {}", channelUID);
         } else {
             logger.warn("This binding is a read-only binding and cannot handle commands");
         }
@@ -91,7 +89,6 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
             ms.joinGroup(address);
             multicastSocket = ms;
 
-            /// TODO wieder debug!
             logger.info("UDP multicast socket opened on '{}:{}' with {} minutes timeout", multicastGroup, multicastPort,
                     timeoutMinutes);
 
@@ -103,7 +100,6 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
             // create polling job for periodically receive multicasts
             pollingJob = scheduler.scheduleWithFixedDelay(this::receiveMcast, 1,
                     OwlBindingConstants.DEFAULT_POLLING_TIME, TimeUnit.SECONDS);
-            /// TODO wieder debug!
             logger.info("Receive polling job started for '{}'", getThing().getUID());
 
             // initialize ready, set to OFFLINE temporarily until a valid multicast has been received
@@ -134,8 +130,7 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
         multicastSocket = null;
         // clear all packets
         energyPacket = null;
-        /// TODO wieder debug!
-        logger.info("Handler '{}' disposed", getThing().getUID());
+        logger.debug("Handler '{}' disposed", getThing().getUID());
     }
 
     /**
@@ -152,13 +147,7 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
             
             // blocking receive of multicast message until timeout
             if (ms != null) {
-                /// TODO wieder raus!
-                logger.info("Waiting for multicast...");
-
                 ms.receive(datagram);
-
-                /// TODO wieder raus!
-                logger.info("... received multicast (length='{}')", datagram.getLength());
             }
 
             // process received data, timout on receive will directly trigger catch block
@@ -171,8 +160,7 @@ public class OwlBridgeHandler extends BaseBridgeHandler {
                 energyPacket = packet;
             } else {
                 energyPacket = null;
-               /// TODO wieder debug!
-               logger.info("Received unknown packet with data '{}'", packetData);
+                logger.info("Received unknown packet with data '{}'", packetData);
             } 
 
             // if we are still not online, we are now

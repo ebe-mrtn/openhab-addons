@@ -48,8 +48,6 @@ public class OwlEnergyHandler extends BaseThingHandler {
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (command == RefreshType.REFRESH) {
-            /// TODO wieder raus!
-            logger.info("Refreshing {}", channelUID);
             updateData();
         } else {
             logger.warn("This binding is a read-only binding and cannot handle commands");
@@ -66,7 +64,6 @@ public class OwlEnergyHandler extends BaseThingHandler {
         // first let bridge start, we wait a little longer
         pollingJob = scheduler.scheduleWithFixedDelay(this::updateData, 5, OwlBindingConstants.DEFAULT_POLLING_TIME,
                 TimeUnit.SECONDS);
-        /// TODO wieder debug!
         logger.info("Receive polling job started for '{}'", getThing().getUID());
         updateStatus(ThingStatus.OFFLINE);
     }
@@ -78,9 +75,7 @@ public class OwlEnergyHandler extends BaseThingHandler {
         if (pj != null)
             pj.cancel(true);
         pollingJob = null;
-
-        /// TODO wieder debug!
-        logger.info("Handler '{}' disposed", getThing().getUID());
+        logger.debug("Handler '{}' disposed", getThing().getUID());
     }
 
     /**
